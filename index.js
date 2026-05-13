@@ -48,6 +48,24 @@ app.get('/welcome', (req, res) => {
   // Dangerous: raw HTML rendering
   res.send(`<h1>Welcome, ${name}!</h1><p>You are logged in.</p>`);
 const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
+
+// Example usage with sanitized input
+app.post('/run', async (req, res) => {
+  const userInput = req.body.command;
+  // Validate and sanitize input - allow only alphanumeric and specific safe characters
+  const safePattern = /^[a-zA-Z0-9\s\-_\.]+$/;
+  if (!safePattern.test(userInput)) {
+    return res.status(400).send('Invalid input');
+  }
+  try {
+    const { stdout, stderr } = await execAsync(userInput, { shell: false });
+    res.send(stdout);
+  } catch (error) {
+    res.status(500).send('Command execution failed');
+  }
+});
 const sanitize = require('sanitize-filename');
 
 app.post('/execute', (req, res) => {
