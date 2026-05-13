@@ -56,7 +56,8 @@ app.post('/execute', (req, res) => {
   if (safeInput !== userInput) {
     return res.status(400).send('Invalid input');
   }
-  exec(safeInput, (error, stdout, stderr) => {
+// Replace eval() with a safer alternative, e.g., JSON.parse() for JSON strings
+const result = JSON.parse(userInput);
     if (error) {
       return res.status(500).send('Execution failed');
     }
