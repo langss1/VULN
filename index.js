@@ -15,7 +15,9 @@ const secretKey = process.env.SECRET_KEY;
 const privateKey = process.env.PRIVATE_KEY;
 
 // Use secretKey and privateKey in your application logic
-console.log('Keys loaded from environment variables');
+// Before: console.log('User credentials:', username, password);
+// After: console.log('User login attempt:', username);
+// Or remove logging entirely if not needed for debugging.
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
