@@ -90,7 +90,24 @@ app.get('/api/ping', (req, res) => {
   const host = req.query.host;
   const exec = require('child_process').exec;
   // Dangerous: user input in shell command
-  exec(`ping -c 1 ${host}`, (error, stdout, stderr) => {
+const { execFile } = require('child_process');
+const path = require('path');
+
+// Validate and sanitize user input
+const userInput = req.body.input;
+if (typeof userInput !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(userInput)) {
+  throw new Error('Invalid input');
+}
+
+// Use execFile with arguments array to prevent shell injection
+const scriptPath = path.join(__dirname, 'scripts', 'process.sh');
+execFile(scriptPath, [userInput], (error, stdout, stderr) => {
+  if (error) {
+    console.error(`Execution error: ${error}`);
+    return;
+  }
+  console.log(`Output: ${stdout}`);
+});
     res.send(`<pre>${stdout}</pre>`);
   });
 });
