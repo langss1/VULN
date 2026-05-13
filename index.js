@@ -8,7 +8,14 @@ const db = new sqlite3.Database(':memory:');
 // AEGIS VULNERABILITY: Hardcoded Secrets
 const password = process.env.PASSWORD;
 const apiKey = process.env.API_KEY;
-const JWT_SECRET = "my_super_secret_key_that_should_be_in_env";
+const dotenv = require('dotenv');
+dotenv.config();
+
+const secretKey = process.env.SECRET_KEY;
+const privateKey = process.env.PRIVATE_KEY;
+
+// Use secretKey and privateKey in your application logic
+console.log('Keys loaded from environment variables');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
