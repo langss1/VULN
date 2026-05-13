@@ -12,7 +12,7 @@ const app = express();
 const db = new sqlite3.Database(':memory:');
 const dbPassword = process.env.DB_PASSWORD;
 // Use dbPassword for database connection
-const dbConfig = { host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASS };
+const dbConfig = { host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASSWORD };
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -39,10 +39,10 @@ function authenticate(req, res, next) {
 
 app.get('/api/users', authenticate, (req, res) => {
   const userId = parseInt(req.query.id, 10);
-  if (isNaN(userId)) {
-    return res.status(400).json({ error: 'Invalid user ID' });
+  if (isNaN(userId) || userId !== req.user.id) {
+    return res.status(403).json({ error: 'Access denied' });
   }
-  const query = 'SELECT * FROM users WHERE id = $1';
+  const query = 'SELECT * FROM users WHERE id = ?';
   db.all(query, [userId], (err, rows) => {
     if (err) {
       console.error('Database error:', err);
@@ -58,14 +58,14 @@ app.get('/welcome', (req, res) => {
     allowedTags: [],
     allowedAttributes: {}
   });
-  res.send(`<h1>Hello, ${safeName}</h1>`);
+  res.send(`<h1>Hello, ${encodeURIComponent(safeName)}</h1>`);
 });
 
 app.get('/api/ping', (req, res) => {
   const userInput = req.query.host || 'localhost';
-  const safePattern = /^[a-zA-Z0-9\-_\.]+$/;
-  if (!safePattern.test(userInput)) {
-    return res.status(400).send('Invalid input');
+  const allowedHosts = ['localhost', '127.0.0.1'];
+  if (!allowedHosts.includes(userInput)) {
+    return res.status(400).send('Invalid host');
   }
   execFile('ping', ['-c', '1', userInput], { shell: false }, (error, stdout, stderr) => {
     if (error) {
@@ -83,11 +83,17 @@ app.post('/api/calculate', (req, res) => {
       const parsed = JSON.parse(input);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         const blockedKeys = ['__proto__', 'constructor', 'prototype'];
-        for (const key of Object.keys(parsed)) {
-          if (blockedKeys.includes(key)) {
-            throw new Error('Invalid key: ' + key);
+        const checkKeys = (obj) => {
+          for (const key of Object.keys(obj)) {
+            if (blockedKeys.includes(key)) {
+              throw new Error('Invalid key: ' + key);
+            }
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+              checkKeys(obj[key]);
+            }
           }
-        }
+        };
+        checkKeys(parsed);
       }
       return parsed;
     };
@@ -102,7 +108,7 @@ app.post('/login', (req, res) => {
   const { username, password } = req.body;
   const crypto = require('crypto');
   const anonymizedUsername = crypto.createHash('sha256').update(username).digest('hex').substring(0, 8);
-  console.log('Login attempt for user:', anonymizedUsername);
+  console.log('Login attempt received');
   res.send("Logged in!");
 });
 
