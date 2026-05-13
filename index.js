@@ -6,7 +6,7 @@ const app = express();
 const db = new sqlite3.Database(':memory:');
 
 // AEGIS VULNERABILITY: Hardcoded Secrets
-const ADMIN_PASSWORD = "admin_password_12345!";
+const password = process.env.PASSWORD;
 const STRIPE_API_KEY = "sk_live_51ABC123xyz_VULNERABLE";
 const JWT_SECRET = "my_super_secret_key_that_should_be_in_env";
 
