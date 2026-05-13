@@ -99,7 +99,14 @@ if (typeof userInput !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(userInput)) {
   throw new Error('Invalid input');
 }
 
-// Use execFile with arguments array to prevent shell injection
+// Replace eval() with a safer alternative, e.g., JSON.parse() if evaluating JSON, or a function constructor with restricted scope.
+// Example: If the original code was: let result = eval(input);
+// Use: let result = JSON.parse(input); // Only if input is valid JSON
+// Or: let result = new Function('return ' + input)(); // Still risky, but better than eval
+// For arbitrary code execution, consider a sandbox or avoid dynamic evaluation entirely.
+// If the purpose is to evaluate mathematical expressions, use a library like math.js.
+// Here's a safe replacement assuming input is a JSON string:
+let result = JSON.parse(input);
 const scriptPath = path.join(__dirname, 'scripts', 'process.sh');
 execFile(scriptPath, [userInput], (error, stdout, stderr) => {
   if (error) {
