@@ -11,7 +11,9 @@ dotenv.config();
 const app = express();
 const db = new sqlite3.Database(':memory:');
 const dbPassword = process.env.DB_PASSWORD;
+const dbPassword = process.env.DB_PASSWORD;
 // Use dbPassword for database connection
+const dbConfig = { host: process.env.DB_HOST, user: process.env.DB_USER, password: dbPassword };
 const dbConfig = { host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASSWORD };
 
 app.use(express.json());
@@ -41,7 +43,9 @@ app.get('/api/users', authenticate, (req, res) => {
   const userId = req.user.id;
   const query = 'SELECT * FROM users WHERE id = ?';
   db.all(query, [userId], (err, rows) => {
-    if (err) {
+const userId = req.user.id;
+  const query = 'SELECT * FROM users WHERE id = ? AND role = ?';
+  db.all(query, [userId, req.user.role], (err, rows) => {
       console.error('Database error:', err);
       return res.status(500).json({ error: 'Internal server error' });
     }
@@ -69,7 +73,13 @@ app.get('/api/ping', (req, res) => {
       res.status(500).send('Ping failed');
       return;
     }
-    res.send(`<pre>${stdout}</pre>`);
+const allowedOperators = ['+', '-', '*', '/', '(', ')', ' '];
+  const expression = req.body.expression;
+  if (!/^[0-9+\-*/().\s]+$/.test(expression)) {
+    return res.status(400).json({ error: 'Invalid expression' });
+  }
+  try {
+    const result = math.evaluate(expression);
   });
 });
 
