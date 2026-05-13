@@ -4,7 +4,11 @@ const path = require('path');
 
 const app = express();
 const db = new sqlite3.Database(':memory:');
-
+const dbPassword = process.env.DB_PASSWORD;
+if (!dbPassword) {
+  throw new Error('DB_PASSWORD environment variable is not set');
+}
+// Use dbPassword securely without logging
 // No fix needed. The code correctly uses environment variables for sensitive data.
 const password = process.env.PASSWORD;
 const apiKey = process.env.API_KEY;
@@ -21,7 +25,7 @@ const privateKey = process.env.PRIVATE_KEY;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+const query = 'SELECT * FROM users WHERE id = ?'; connection.query(query, [userId], (err, results) => { if (err) throw err; console.log(results); });
 // Initialize DB
 db.serialize(() => {
   db.run("CREATE TABLE users (id INT, username TEXT, password TEXT, role TEXT)");
@@ -35,7 +39,16 @@ app.get('/api/users', (req, res) => {
   // Dangerous: direct concatenation
 const query = 'SELECT * FROM users WHERE id = ?'; connection.query(query, [userId], (error, results) => { if (error) throw error; console.log(results); });
   
-  db.all(query, [], (err, rows) => {
+const sanitizeHtml = require('sanitize-html');
+
+app.get('/user', (req, res) => {
+  const userInput = req.query.name;
+  const safeInput = sanitizeHtml(userInput, {
+    allowedTags: [],
+    allowedAttributes: {}
+  });
+  res.send(`<h1>Hello, ${safeInput}</h1>`);
+});
 const sanitizeHtml = require('sanitize-html');
 app.get('/user', (req, res) => {
   const userInput = req.query.name;
@@ -53,7 +66,20 @@ app.get('/user', (req, res) => {
 app.get('/welcome', (req, res) => {
   const name = req.query.name || 'Guest';
   // Dangerous: raw HTML rendering
-  res.send(`<h1>Welcome, ${name}!</h1><p>You are logged in.</p>`);
+const { execFile } = require('child_process');
+
+// Example: user input is in variable 'userInput'
+const userInput = req.body.input; // or wherever it comes from
+const command = 'ls'; // fixed command
+const args = ['-l', userInput]; // pass user input as argument
+
+execFile(command, args, (error, stdout, stderr) => {
+  if (error) {
+    console.error(`exec error: ${error}`);
+    return;
+  }
+  console.log(`stdout: ${stdout}`);
+});
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
@@ -69,7 +95,18 @@ app.post('/run', async (req, res) => {
   try {
     const { stdout, stderr } = await execAsync(userInput, { shell: false });
     res.send(stdout);
-  } catch (error) {
+const { execFile } = require('child_process');
+
+// Assuming the original code used exec() with user input directly
+// Example: exec('ls ' + userInput, callback);
+// Fixed version:
+execFile('ls', [userInput], (error, stdout, stderr) => {
+  if (error) {
+    console.error(`Error: ${error.message}`);
+    return;
+  }
+  console.log(`stdout: ${stdout}`);
+});
 // Before: console.log('User credentials:', username, password);
 // After: console.log('User login attempt:', username);
 // Instead of logging the actual value, log a placeholder or omit it
@@ -90,13 +127,15 @@ app.post('/execute', (req, res) => {
     res.send(stdout);
   });
 });
-});
+// Replace eval() with JSON.parse() for JSON input
+const data = JSON.parse(input);
 const sanitize = require('sanitize-filename');
 
 app.post('/execute', (req, res) => {
   const userInput = req.body.command;
   const safeInput = sanitize(userInput);
-  if (safeInput !== userInput) {
+// Before: console.log('User password:', password);
+// After: console.log('User password: [REDACTED]');
     return res.status(400).send('Invalid input');
   }
 // Replace eval() with a safer alternative, e.g., JSON.parse() for JSON strings
