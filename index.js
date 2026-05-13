@@ -65,7 +65,13 @@ const userId = req.user.id;
 app.get('/api/ping', (req, res) => {
   const userInput = req.query.host || 'localhost';
   const allowedHosts = ['localhost', '127.0.0.1'];
-  if (!allowedHosts.includes(userInput)) {
+const allowedOperators = ['+', '-', '*', '/', '(', ')', ' '];
+  const expression = req.body.expression;
+  if (!/^[0-9+\-*/().\s]+$/.test(expression)) {
+    return res.status(400).json({ error: 'Invalid expression' });
+  }
+  try {
+    const result = math.evaluate(expression);
     return res.status(400).send('Invalid host');
   }
   execFile('ping', ['-c', '1', userInput], { shell: false }, (error, stdout, stderr) => {
