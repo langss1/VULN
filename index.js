@@ -63,7 +63,9 @@ app.post('/run', async (req, res) => {
     const { stdout, stderr } = await execAsync(userInput, { shell: false });
     res.send(stdout);
   } catch (error) {
-    res.status(500).send('Command execution failed');
+const sensitiveData = req.body.password;
+// Instead of logging the actual value, log a placeholder or omit it
+console.log('Password received (not logged for security)');
   }
 });
 const sanitize = require('sanitize-filename');
