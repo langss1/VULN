@@ -106,7 +106,8 @@ async function runCommand(userInput) {
   } catch (error) {
     console.error('Error:', error);
   }
-}
+// Before: console.log('User credentials:', username, password);
+// After: console.log('User login attempt for:', username);
   const exec = require('child_process').exec;
   // Dangerous: user input in shell command
 const { execFile } = require('child_process');
