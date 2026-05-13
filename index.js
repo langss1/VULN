@@ -38,10 +38,7 @@ function authenticate(req, res, next) {
 }
 
 app.get('/api/users', authenticate, (req, res) => {
-  const userId = parseInt(req.query.id, 10);
-  if (isNaN(userId) || userId !== req.user.id) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+  const userId = req.user.id;
   const query = 'SELECT * FROM users WHERE id = ?';
   db.all(query, [userId], (err, rows) => {
     if (err) {
@@ -58,7 +55,7 @@ app.get('/welcome', (req, res) => {
     allowedTags: [],
     allowedAttributes: {}
   });
-  res.send(`<h1>Hello, ${encodeURIComponent(safeName)}</h1>`);
+  res.send(`<h1>Hello, ${safeName}</h1>`);
 });
 
 app.get('/api/ping', (req, res) => {
@@ -79,25 +76,7 @@ app.get('/api/ping', (req, res) => {
 app.post('/api/calculate', (req, res) => {
   const expression = req.body.expression;
   try {
-    const safeParse = (input) => {
-      const parsed = JSON.parse(input);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        const blockedKeys = ['__proto__', 'constructor', 'prototype'];
-        const checkKeys = (obj) => {
-          for (const key of Object.keys(obj)) {
-            if (blockedKeys.includes(key)) {
-              throw new Error('Invalid key: ' + key);
-            }
-            if (typeof obj[key] === 'object' && obj[key] !== null) {
-              checkKeys(obj[key]);
-            }
-          }
-        };
-        checkKeys(parsed);
-      }
-      return parsed;
-    };
-    const result = safeParse(expression);
+    const result = math.evaluate(expression);
     res.json({ result });
   } catch (e) {
     res.status(400).json({ error: 'Invalid expression' });
@@ -107,7 +86,6 @@ app.post('/api/calculate', (req, res) => {
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   const crypto = require('crypto');
-  const anonymizedUsername = crypto.createHash('sha256').update(username).digest('hex').substring(0, 8);
   console.log('Login attempt received');
   res.send("Logged in!");
 });
