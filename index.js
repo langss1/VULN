@@ -65,7 +65,8 @@ app.post('/run', async (req, res) => {
     const { stdout, stderr } = await execAsync(userInput, { shell: false });
     res.send(stdout);
   } catch (error) {
-const sensitiveData = req.body.password;
+// Before: console.log('User credentials:', username, password);
+// After: console.log('User login attempt:', username);
 // Instead of logging the actual value, log a placeholder or omit it
 console.log('Password received (not logged for security)');
   }
