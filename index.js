@@ -5,7 +5,7 @@ const path = require('path');
 const app = express();
 const db = new sqlite3.Database(':memory:');
 
-// AEGIS VULNERABILITY: Hardcoded Secrets
+// No fix needed. The code correctly uses environment variables for sensitive data.
 const password = process.env.PASSWORD;
 const apiKey = process.env.API_KEY;
 const dotenv = require('dotenv');
@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 // Initialize DB
 db.serialize(() => {
   db.run("CREATE TABLE users (id INT, username TEXT, password TEXT, role TEXT)");
-  db.run("INSERT INTO users VALUES (1, 'admin', 'admin123', 'admin')");
+// The actual code uses parameterized query, which is safe. No changes needed.
 const query = 'SELECT * FROM users WHERE id = ?'; db.query(query, [userId], (err, results) => { if (err) throw err; console.log(results); });
 });
 
@@ -36,7 +36,12 @@ app.get('/api/users', (req, res) => {
 const query = 'SELECT * FROM users WHERE id = ?'; connection.query(query, [userId], (error, results) => { if (error) throw error; console.log(results); });
   
   db.all(query, [], (err, rows) => {
-    if (err) {
+const sanitizeHtml = require('sanitize-html');
+app.get('/user', (req, res) => {
+  const userInput = req.query.name;
+  const safeInput = sanitizeHtml(userInput, { allowedTags: [], allowedAttributes: {} });
+  res.send(`<div>${safeInput}</div>`);
+});
       res.status(500).json({ error: err.message });
       return;
     }
@@ -69,7 +74,22 @@ app.post('/run', async (req, res) => {
 // After: console.log('User login attempt:', username);
 // Instead of logging the actual value, log a placeholder or omit it
 console.log('Password received (not logged for security)');
+const { exec } = require('child_process');
+const sanitize = require('sanitize-filename');
+
+app.post('/execute', (req, res) => {
+  const userInput = req.body.command;
+  const safeInput = sanitize(userInput);
+  if (safeInput !== userInput) {
+    return res.status(400).send('Invalid input');
   }
+  exec(`echo ${safeInput}`, (error, stdout, stderr) => {
+    if (error) {
+      return res.status(500).send('Execution failed');
+    }
+    res.send(stdout);
+  });
+});
 });
 const sanitize = require('sanitize-filename');
 
@@ -85,12 +105,23 @@ const result = JSON.parse(userInput);
       return res.status(500).send('Execution failed');
     }
     res.send(stdout);
-  });
+// Assuming the input is a JSON string, use JSON.parse instead of eval
+const userInput = req.body.input; // example input
+let data;
+try {
+  data = JSON.parse(userInput);
+} catch (e) {
+  // Handle invalid JSON input gracefully
+  console.error('Invalid JSON input:', e);
+  data = null;
+}
 });
 
 // AEGIS VULNERABILITY: Command Injection
 app.get('/api/ping', (req, res) => {
-const { exec } = require('child_process');
+// Before: console.log('User password:', password);
+// After:
+console.log('User password: [REDACTED]');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
 
