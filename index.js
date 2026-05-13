@@ -31,7 +31,7 @@ const query = 'SELECT * FROM users WHERE id = ?'; db.query(query, [userId], (err
 app.get('/api/users', (req, res) => {
   const userId = req.query.id;
   // Dangerous: direct concatenation
-  const query = "SELECT * FROM users WHERE id = " + userId;
+const query = 'SELECT * FROM users WHERE id = ?'; connection.query(query, [userId], (error, results) => { if (error) throw error; console.log(results); });
   
   db.all(query, [], (err, rows) => {
     if (err) {
