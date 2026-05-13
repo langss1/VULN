@@ -12,10 +12,10 @@ const app = express();
 const db = new sqlite3.Database(':memory:');
 const dbPassword = process.env.DB_PASSWORD;
 const dbPassword = process.env.DB_PASSWORD;
-// Use dbPassword for database connection
+// Removed duplicate declaration
 const dbConfig = { host: process.env.DB_HOST, user: process.env.DB_USER, password: dbPassword };
-const dbConfig = { host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASSWORD };
-
+const dbConfig = { host: process.env.DB_HOST, user: process.env.DB_USER, password: dbPassword };
+// Removed duplicate declaration
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -27,10 +27,10 @@ function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing or invalid authorization header' });
-  }
+// Duplicate code block removed
   const token = authHeader.split(' ')[1];
   try {
-    const jwt = require('jsonwebtoken');
+// Duplicate code block removed
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
@@ -53,7 +53,7 @@ const userId = req.user.id;
   });
 });
 
-app.get('/welcome', (req, res) => {
+// Duplicate code block removed
   const name = req.query.name || 'Guest';
   const safeName = sanitizeHtml(name, {
     allowedTags: [],
