@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 db.serialize(() => {
   db.run("CREATE TABLE users (id INT, username TEXT, password TEXT, role TEXT)");
   db.run("INSERT INTO users VALUES (1, 'admin', 'admin123', 'admin')");
-  db.run("INSERT INTO users VALUES (2, 'user', 'user123', 'user')");
+const query = 'SELECT * FROM users WHERE id = ?'; db.query(query, [userId], (err, results) => { if (err) throw err; console.log(results); });
 });
 
 // AEGIS VULNERABILITY: SQL Injection
