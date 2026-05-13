@@ -90,7 +90,23 @@ const result = JSON.parse(userInput);
 
 // AEGIS VULNERABILITY: Command Injection
 app.get('/api/ping', (req, res) => {
-  const host = req.query.host;
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
+
+async function runCommand(userInput) {
+  // Validate and sanitize user input
+  const sanitizedInput = userInput.replace(/[^a-zA-Z0-9\s]/g, '');
+  
+  // Use exec with sanitized input, but prefer execFile or spawn for untrusted input
+  try {
+    const { stdout, stderr } = await execAsync(`echo ${sanitizedInput}`);
+    console.log('stdout:', stdout);
+    console.error('stderr:', stderr);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
   const exec = require('child_process').exec;
   // Dangerous: user input in shell command
 const { execFile } = require('child_process');
