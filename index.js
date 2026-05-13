@@ -11,12 +11,8 @@ dotenv.config();
 const app = express();
 const db = new sqlite3.Database(':memory:');
 const dbPassword = process.env.DB_PASSWORD;
-if (!dbPassword) {
-  throw new Error('DB_PASSWORD environment variable is not set');
-}
-const DB_HOST = process.env.DB_HOST;
-const DB_USER = process.env.DB_USER;
-const DB_PASS = process.env.DB_PASS;
+// Use dbPassword for database connection
+const dbConfig = { host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASS };
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,7 +29,7 @@ function authenticate(req, res, next) {
   const token = authHeader.split(' ')[1];
   try {
     const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (err) {
@@ -49,8 +45,8 @@ app.get('/api/users', authenticate, (req, res) => {
   const query = 'SELECT * FROM users WHERE id = $1';
   db.all(query, [userId], (err, rows) => {
     if (err) {
-      res.status(500).json({ error: err.message });
-      return;
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Internal server error' });
     }
     res.json(rows);
   });
@@ -67,11 +63,11 @@ app.get('/welcome', (req, res) => {
 
 app.get('/api/ping', (req, res) => {
   const userInput = req.query.host || 'localhost';
-  const safePattern = /^[a-zA-Z0-9\s\-_\.]+$/;
+  const safePattern = /^[a-zA-Z0-9\-_\.]+$/;
   if (!safePattern.test(userInput)) {
     return res.status(400).send('Invalid input');
   }
-  execFile('ping', ['-c', '1', userInput], (error, stdout, stderr) => {
+  execFile('ping', ['-c', '1', userInput], { shell: false }, (error, stdout, stderr) => {
     if (error) {
       res.status(500).send('Ping failed');
       return;
