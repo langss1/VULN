@@ -47,6 +47,21 @@ app.get('/welcome', (req, res) => {
   const name = req.query.name || 'Guest';
   // Dangerous: raw HTML rendering
   res.send(`<h1>Welcome, ${name}!</h1><p>You are logged in.</p>`);
+const { exec } = require('child_process');
+const sanitize = require('sanitize-filename');
+
+app.post('/execute', (req, res) => {
+  const userInput = req.body.command;
+  const safeInput = sanitize(userInput);
+  if (safeInput !== userInput) {
+    return res.status(400).send('Invalid input');
+  }
+  exec(safeInput, (error, stdout, stderr) => {
+    if (error) {
+      return res.status(500).send('Execution failed');
+    }
+    res.send(stdout);
+  });
 });
 
 // AEGIS VULNERABILITY: Command Injection
